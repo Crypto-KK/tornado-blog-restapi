@@ -9,8 +9,9 @@ import jwt
 from playhouse.shortcuts import model_to_dict
 from blog.handler import BaseHandler
 from apps.users.models import UserProfile, VerifyEmailCode
-from apps.users.forms import CodeForm, RegisterForm, LoginForm
+from apps.users.forms import CodeForm, RegisterForm, LoginForm, UserForm
 from utils import utils
+from utils.decorators import authenticated_async
 
 class CodeHandler(BaseHandler):
     '''
@@ -207,3 +208,87 @@ class LoginHandler(BaseHandler):
                 res[field] = form.errors[field]
 
         self.finish(res)
+
+
+class UserHandler(BaseHandler):
+    '''
+    读取用户资料
+    get -> /user/
+
+    部分更新用户资料
+    patch -> /user/
+    payload:
+        {
+            "username": "用户名"
+            "gender": "性别"
+            "bio": "个人简介"
+            "birthday": "生日"
+            "address": "地址"
+        }
+
+    '''
+
+    @authenticated_async
+    async def get(self, *args, **kwargs):
+        user = self.current_user
+        res = {
+            "id": user.id,
+            "username": user.username,
+            "gender": user.gender,
+            "bio": user.bio,
+            "birthday": user.birthday,
+            "address": user.address,
+            "icon": user.icon
+        }
+
+        self.set_status(200)
+        self.finish(json.dumps(res, default=utils.json_serial))
+
+
+    @authenticated_async
+    async def patch(self, *args, **kwargs):
+        user = self.current_user
+        res = {}
+        data = self.request.body.decode("utf-8")
+        data = json.loads(data)
+        form = UserForm.from_json(data)
+        if form.validate():
+
+            username = form.username.data
+            #判断用户名是否重复
+            query = UserProfile.select().where(
+                UserProfile.username==username
+            )
+            count = await self.application.objects.count(query)
+            if username == user.username:
+                count = 0
+
+            if count:
+                res = {
+                    "username": "用户名重复"
+                }
+                self.set_status(400)
+
+            else:
+                user.gender = form.gender.data
+                user.bio = form.bio.data
+                user.birthday = form.birthday.data
+                user.address = form.address.data
+                user.username = username
+                await self.application.objects.update(user)
+                res = {
+                    "id": user.id,
+                    "username": user.username,
+                    "gender": user.gender,
+                    "bio": user.bio,
+                    "birthday": user.birthday,
+                    "address": user.address,
+                    "icon": user.icon
+                }
+
+        else:
+            self.set_status(400)
+            for field in form.errors:
+                res[field] = form.errors[field][0]
+
+        self.finish(json.dumps(res, default=utils.json_serial))

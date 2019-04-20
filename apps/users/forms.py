@@ -33,3 +33,11 @@ class RegisterForm(Form):
 class LoginForm(Form):
     username = StringField("用户名", validators=[DataRequired(message="请输入用户名或者邮箱!"),])
     password = StringField("密码", validators=[DataRequired(message="请输入密码!")])
+
+
+class UserForm(Form):
+    username = StringField("用户名")
+    gender = StringField("性别", validators=[DataRequired(message='请输入性别')])
+    bio = StringField("个人简介")
+    birthday = StringField("生日")
+    address = StringField("地址")

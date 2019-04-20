@@ -10,10 +10,21 @@ def authenticated_async(func):
             'Authorization', None
         )
         try:
-            Authorization = Authorization.split(' ')[0]
+            Authorization = Authorization.split(' ')
+            if len(Authorization) != 2:
+                self.set_status(401)
+                self.finish({'detail': '身份认证信息填写不正确，格式为：JWT token。'})
+                return None
+            else:
+                if Authorization[0] != 'JWT':
+                    self.set_status(401)
+                    self.finish({'detail': '身份认证信息填写不正确，格式为：JWT token。'})
+
         except Exception as e:
             self.set_status(401)
             self.finish({'detail': '身份认证信息未提供。'})
+
+        Authorization = Authorization[1]
 
         if Authorization:
 
@@ -24,7 +35,7 @@ def authenticated_async(func):
                     leeway=self.settings['jwt_expire'],
                     options={"verify_exp": True}
                 )
-                print(data)
+
                 user_id = data['id']
 
                 try:
