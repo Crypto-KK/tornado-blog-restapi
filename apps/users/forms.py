@@ -29,3 +29,7 @@ class RegisterForm(Form):
         DataRequired(message='请再次输入密码')
     ])
 
+
+class LoginForm(Form):
+    username = StringField("用户名", validators=[DataRequired(message="请输入用户名或者邮箱!"),])
+    password = StringField("密码", validators=[DataRequired(message="请输入密码!")])

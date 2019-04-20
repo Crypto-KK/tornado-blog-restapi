@@ -7,6 +7,8 @@ from peewee_async import Manager
 from blog.urls import urlpatterns
 from blog.settings import settings, db
 
+from tornado.web import authenticated
+
 if __name__ == '__main__':
     import wtforms_json
 

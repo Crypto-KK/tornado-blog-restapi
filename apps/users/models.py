@@ -1,6 +1,7 @@
 from blog.models import BaseModel
 from peewee import *
 from bcrypt import hashpw, gensalt
+from blog.settings import settings
 
 
 class PasswordHash(bytes):
@@ -45,7 +46,7 @@ class UserProfile(BaseModel):
     password = PasswordField(verbose_name="密码")
     email = CharField(max_length=50,  verbose_name='邮箱', help_text='邮箱')
     gender = CharField(max_length=10, choices=GENDERS, verbose_name='性别', help_text='性别', default='male')
-    icon = CharField(max_length=200, null=True, verbose_name="头像")
+    icon = CharField(max_length=200, null=True, verbose_name="头像", default=settings['SITE_URL']+'/media/users/icons/default.png/')
     address = CharField(max_length=100, null=True, verbose_name="地址")
     bio = TextField(null=True, verbose_name="简介")
     birthday = DateField(null=True, verbose_name='出生日期', help_text='出生日期')

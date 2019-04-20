@@ -5,17 +5,21 @@ from datetime import datetime, timedelta
 import random
 import logging
 import aiofiles
-
+import jwt
 from playhouse.shortcuts import model_to_dict
 from blog.handler import BaseHandler
 from apps.users.models import UserProfile, VerifyEmailCode
-from apps.users.forms import CodeForm, RegisterForm
-from tools import utils
+from apps.users.forms import CodeForm, RegisterForm, LoginForm
+from utils import utils
 
 class CodeHandler(BaseHandler):
     '''
     发送邮箱验证码
     post -> /code/
+    payload:
+        {
+            "email": "邮箱"
+        }
     '''
     def generate_code(self):
         '''
@@ -76,6 +80,13 @@ class RegisterHandler(BaseHandler):
     '''
     用户注册
     post -> /register/
+    payload:
+        {
+            "email": "邮箱",
+            "code": "验证码",
+            "password1": "密码",
+            "password2": "确认密码",
+        }
     '''
     async def post(self, *args, **kwargs):
         res = {}
@@ -149,3 +160,50 @@ class RegisterHandler(BaseHandler):
         self.finish(json.dumps(res, default=utils.json_serial))
 
 
+class LoginHandler(BaseHandler):
+    '''
+    用户登录
+    post -> /login/
+    payload:
+        {
+            "username": "用户名或者邮箱",
+            "password": "密码"
+        }
+    '''
+    async def post(self, *args, **kwargs):
+        res = {}
+
+        data = self.request.body.decode("utf-8")
+        data = json.loads(data)
+        form = LoginForm.from_json(data)
+        if form.validate():
+            username = form.username.data
+            password = form.password.data
+            try:
+                query = UserProfile.select().where(
+                    (UserProfile.username==username) | (UserProfile.email==username)
+                )
+                user = await self.application.objects.execute(query)
+                user = user[0]
+                if not user.password.check_password(password):
+                    res['non_fields'] = '用户名或密码错误'
+                    self.set_status(400)
+                else:
+                    payload = {
+                        'id': user.id,
+                        'username': username,
+                        'exp': datetime.utcnow()
+                    }
+                    token = jwt.encode(payload, self.settings["secret_key"], algorithm='HS256')
+                    res['token'] = token.decode('utf-8')
+
+            except UserProfile.DoesNotExist:
+                self.set_status(400)
+                res['username'] = '用户不存在'
+
+        else:
+            self.set_status(400)
+            for field in form.errors:
+                res[field] = form.errors[field]
+
+        self.finish(res)
