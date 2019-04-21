@@ -55,7 +55,7 @@ class UserProfile(BaseModel):
     followed_nums = IntegerField(default=0, verbose_name='粉丝数', help_text='粉丝数')
 
     is_valid = BooleanField(default=False, verbose_name='是否激活', help_text='是否激活')
-
+    is_admin = BooleanField(default=False, verbose_name='是否为管理员')
 
 class VerifyEmailCode(BaseModel):
     '''
