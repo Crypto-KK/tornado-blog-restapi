@@ -26,6 +26,8 @@ class Post(BaseModel):
 
     @classmethod
     def extend(cls):
-        return cls.select(cls, UserProfile.id, UserProfile.username).join(
-            UserProfile
+        return cls.select(cls, UserProfile.id, UserProfile.username, Category.id, Category.name, Category.desc).join(
+            UserProfile, on=cls.author
+        ).switch(cls).join(
+            Category, on=cls.category
         )

@@ -8,6 +8,7 @@ settings = {
     "jwt_expire": 7*24*3600,
     "SITE_URL": "http://127.0.0.1:8888",
     'MAX_PER_PAGE': 10,
+    'PAGINATE_PARAM': 'page',
     'db': {
         "host": "127.0.0.1",
         "users": "root",

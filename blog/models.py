@@ -8,7 +8,7 @@ class BaseModel(Model):
 
     def save(self, *args, **kwargs):
         if self._get_pk_value() is None:
-            self.create_time = datetime.now().strftime(
+            self.add_time = datetime.now().strftime(
                 "%Y-%m-%d %H:%M:%S")
         self.update_time = datetime.now().strftime(
             "%Y-%m-%d %H:%M:%S")

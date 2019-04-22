@@ -4,6 +4,8 @@ import jwt
 from apps.users.models import UserProfile
 
 res = {'detail': '身份认证信息未提供。'}
+res_format = {'detail': '身份认证信息填写不正确，格式为：JWT token。'}
+res_owner = {'detail': '需要拥有者权限。'}
 def authenticated_async(verify_is_admin=False):
     def decorator(func):
         @wraps(func)
@@ -15,12 +17,12 @@ def authenticated_async(verify_is_admin=False):
                 Authorization = Authorization.split(' ')
                 if len(Authorization) != 2:
                     self.set_status(401)
-                    self.finish({'detail': '身份认证信息填写不正确，格式为：JWT token。'})
+                    self.finish(res_format)
                     return None
                 else:
                     if Authorization[0] != 'JWT':
                         self.set_status(401)
-                        self.finish({'detail': '身份认证信息填写不正确，格式为：JWT token。'})
+                        self.finish(res_format)
                         return None
             except Exception as e:
                 self.set_status(401)
@@ -70,3 +72,14 @@ def authenticated_async(verify_is_admin=False):
         return wrapper
     return decorator
 
+
+def owner_required(func):
+    @wraps(func)
+    async def wrapper(self, *args, **kwargs):
+
+        user = self._current_user
+
+        await func(self, *args, **kwargs)
+
+
+    return wrapper
